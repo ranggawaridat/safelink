@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Menunggu sebentar...</h3>
+<p>Anda akan diarahkan ke halaman tujuan dalam <span id="timer">5</span> detik</p>
+
+<!-- Contoh iklan / placeholder -->
+<div style="border:1px solid #ccc; padding:20px; margin:20px 0;">
+  <h4>Promo / Banner</h4>
+  <p>Ini bisa diganti dengan iklan atau konten monetisasi lain</p>
+</div>
+
+<script>
+let seconds = 5;
+const timer = document.getElementById('timer');
+
+const countdown = setInterval(() => {
+    seconds -= 1;
+    timer.textContent = seconds;
+    if (seconds <= 0) {
+        clearInterval(countdown);
+        window.location.href = "{{ original_url }}";
+    }
+}, 1000);
+</script>
+{% endblock %}

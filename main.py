@@ -66,12 +66,47 @@ async def shorten(request: Request, url: str = Form(...)):
     supabase.table("links").insert({"user_id": user.user.id, "original_url": url, "short_code": code}).execute()
     return RedirectResponse("/dashboard", status_code=302)
 
-
-@app.get("/s/{code}")
-async def redirect_link(code: str):
+@app.get("/s/{code}", response_class=HTMLResponse)
+async def redirect_link(request: Request, code: str):
+    # Ambil link dari DB
     res = supabase.table("links").select("*").eq("short_code", code).single().execute()
     if not res.data:
         return HTMLResponse("<h3>Link not found</h3>")
-    url = res.data["original_url"]
-    supabase.table("links").update({"clicks": res.data["clicks"] + 1}).eq("short_code", code).execute()
-    return RedirectResponse(url)
+
+    # Update hanya clicks
+    supabase.table("links").update({
+        "clicks": res.data["clicks"] + 1
+    }).eq("short_code", code).execute()
+
+    # Render halaman iklan dulu
+    return templates.TemplateResponse("ad.html", {
+        "request": request,
+        "original_url": res.data["original_url"]
+    })
+
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+
+@app.post("/register")
+async def register_post(request: Request, email: str = Form(...), password: str = Form(...)):
+    try:
+        # create user via Supabase Auth (service role key)
+        user = supabase.auth.admin.create_user({
+            "email": email,
+            "password": password,
+            "email_confirm": True  # Set to True if you want to auto-confirm the email
+        })
+
+        return RedirectResponse("/login", status_code=302)
+    except Exception as e:
+        return templates.TemplateResponse("register.html", {"request": request, "error": str(e)})
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse("/login", status_code=302)
+    # hapus cookie access_token
+    response.delete_cookie("access_token")
+    return response
