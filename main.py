@@ -4,6 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from config import supabase
 import random, string
+from fastapi import Form
+
+EARNING_PER_CLICK = 0.0008  # USD per klik
 
 app = FastAPI()
 
@@ -68,17 +71,19 @@ async def shorten(request: Request, url: str = Form(...)):
 
 @app.get("/s/{code}", response_class=HTMLResponse)
 async def redirect_link(request: Request, code: str):
-    # Ambil link dari DB
     res = supabase.table("links").select("*").eq("short_code", code).single().execute()
     if not res.data:
         return HTMLResponse("<h3>Link not found</h3>")
 
-    # Update hanya clicks
+    # update clicks dan earnings
+    new_clicks = res.data["clicks"] + 1
+    new_earnings = round(res.data.get("earnings", 0) + EARNING_PER_CLICK, 2)
+
     supabase.table("links").update({
-        "clicks": res.data["clicks"] + 1
+        "clicks": new_clicks,
+        "earnings": new_earnings
     }).eq("short_code", code).execute()
 
-    # Render halaman iklan dulu
     return templates.TemplateResponse("ad.html", {
         "request": request,
         "original_url": res.data["original_url"]
@@ -110,3 +115,52 @@ async def logout():
     # hapus cookie access_token
     response.delete_cookie("access_token")
     return response
+
+MIN_WITHDRAW = 5.0  # minimal withdraw $5
+
+@app.post("/withdraw")
+async def withdraw(request: Request, amount: float = Form(...)):
+    token = request.cookies.get("access_token")
+    if not token:
+        return RedirectResponse("/login")
+
+    # ambil user info
+    user = supabase.auth.get_user(token)
+    user_id = user.user.id
+
+    # hitung total earnings user
+    links = supabase.table("links").select("earnings").eq("user_id", user_id).execute().data
+    total_earnings = sum(link['earnings'] for link in links)
+
+    # validasi minimum withdraw
+    if amount < MIN_WITHDRAW:
+        return templates.TemplateResponse("dashboard.html", {
+            "request": request,
+            "links": links,
+            "error": f"Minimal withdraw adalah ${MIN_WITHDRAW}"
+        })
+
+    # validasi tidak melebihi total earnings
+    if amount > total_earnings:
+        return templates.TemplateResponse("dashboard.html", {
+            "request": request,
+            "links": links,
+            "error": f"Jumlah withdraw terlalu besar! Total earnings: ${total_earnings}"
+        })
+
+    # simpan request withdraw
+    supabase.table("withdrawals").insert({
+        "user_id": user_id,
+        "amount": amount,
+        "status": "pending"
+    }).execute()
+
+    # reset earnings user (opsional)
+    for link in links:
+        supabase.table("links").update({"earnings": 0}).eq("user_id", user_id).execute()
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "links": links,
+        "success": f"Withdraw request ${amount} berhasil dibuat! Status: pending"
+    })
