@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Dashboard</h3>
+<form method="post" action="/shorten">
+  <input type="text" name="url" placeholder="Masukkan URL..." required>
+  <button type="submit">Shorten</button>
+</form>
+
+<h4>Daftar Link:</h4>
+<ul>
+  {% for link in links %}
+  <li>
+    <a href="/s/{{ link.short_code }}" target="_blank">
+      {{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}
+    </a> → {{ link.original_url }}
+    ({{ link.clicks }} klik)
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
