@@ -2,16 +2,14 @@ from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from config import supabase
+from config import supabase, EARNING_PER_CLICK
 import random, string
-from fastapi import Form
-
-EARNING_PER_CLICK = 0.0008  # USD per klik
 
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
 
 # ========== UTIL ==========
 def random_code(n=6):
@@ -36,7 +34,7 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
         auth = supabase.auth.sign_in_with_password({"email": email, "password": password})
         session = auth.session
         response = RedirectResponse("/dashboard", status_code=302)
-        response.set_cookie(key="access_token", value=session.access_token)
+        response.set_cookie(key="access_token", value=session.access_token, httponly=True)
         return response
     except Exception as e:
         return templates.TemplateResponse("login.html", {"request": request, "error": str(e)})
@@ -52,7 +50,7 @@ async def dashboard(request: Request):
     data = (
         supabase.table("links")
         .select("*")
-        .eq("user_id", user.user.id)
+        .eq("user_id", user.user.id)# type: ignore
         .execute()
     )
     return templates.TemplateResponse("dashboard.html", {"request": request, "links": data.data})
@@ -66,7 +64,7 @@ async def shorten(request: Request, url: str = Form(...)):
 
     user = supabase.auth.get_user(token)
     code = random_code()
-    supabase.table("links").insert({"user_id": user.user.id, "original_url": url, "short_code": code}).execute()
+    supabase.table("links").insert({"user_id": user.user.id, "original_url": url, "short_code": code}).execute() # type: ignore
     return RedirectResponse("/dashboard", status_code=302)
 
 @app.get("/s/{code}", response_class=HTMLResponse)
@@ -124,43 +122,27 @@ async def withdraw(request: Request, amount: float = Form(...)):
     if not token:
         return RedirectResponse("/login")
 
-    # ambil user info
     user = supabase.auth.get_user(token)
     user_id = user.user.id
 
-    # hitung total earnings user
-    links = supabase.table("links").select("earnings").eq("user_id", user_id).execute().data
+    links = supabase.table("links").select("id, earnings").eq("user_id", user_id).execute().data
     total_earnings = sum(link['earnings'] for link in links)
 
-    # validasi minimum withdraw
-    if amount < MIN_WITHDRAW:
-        return templates.TemplateResponse("dashboard.html", {
-            "request": request,
-            "links": links,
-            "error": f"Minimal withdraw adalah ${MIN_WITHDRAW}"
-        })
-
-    # validasi tidak melebihi total earnings
     if amount > total_earnings:
         return templates.TemplateResponse("dashboard.html", {
             "request": request,
             "links": links,
-            "error": f"Jumlah withdraw terlalu besar! Total earnings: ${total_earnings}"
+            "error": "Jumlah withdraw melebihi saldo!"
         })
 
-    # simpan request withdraw
-    supabase.table("withdrawals").insert({
-        "user_id": user_id,
-        "amount": amount,
-        "status": "pending"
-    }).execute()
-
-    # reset earnings user (opsional)
+    # Kurangi earnings secara proporsional
+    remaining = amount
     for link in links:
-        supabase.table("links").update({"earnings": 0}).eq("user_id", user_id).execute()
-
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "links": links,
-        "success": f"Withdraw request ${amount} berhasil dibuat! Status: pending"
-    })
+        if remaining <= 0:
+            break
+        if link["earnings"] <= remaining:
+            remaining -= link["earnings"]
+            supabase.table("links").update({"earnings": 0}).eq("id", link["id"]).execute()
+        else:
+            supabase.table("links").update({"earnings": link["earnings"] - remaining}).eq("id", link["id"]).execute()
+            remaining = 0

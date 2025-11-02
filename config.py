@@ -9,3 +9,4 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+EARNING_PER_CLICK = float(os.getenv("EARNING_PER_CLICK", 0.0008))
