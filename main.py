@@ -15,6 +15,12 @@ templates = Jinja2Templates(directory="templates")
 def random_code(n=6):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=n))
 
+def get_user_profile(user_id):
+    res = supabase.table("user_profiles").select("*").eq("id", user_id).execute()
+    if res.data:
+        return res.data[0]
+    return None
+
 
 # ========== ROUTES ==========
 
@@ -41,19 +47,78 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
+def dashboard(request: Request):
     token = request.cookies.get("access_token")
-    if not token:
+    user = supabase.auth.get_user(token).user if token else None
+    if not user:
         return RedirectResponse("/login")
 
-    user = supabase.auth.get_user(token)
-    data = (
-        supabase.table("links")
-        .select("*")
-        .eq("user_id", user.user.id)# type: ignore
-        .execute()
-    )
-    return templates.TemplateResponse("dashboard.html", {"request": request, "links": data.data})
+    profile = get_user_profile(user.id)
+    if not profile:
+        return HTMLResponse("<h3>Profile not found</h3>")
+
+    # ambil link milik user
+    links = supabase.table("links").select("*").eq("user_id", user.id).execute().data
+
+    total_clicks = sum(l["clicks"] for l in links)
+    total_earnings = sum(l["earnings"] for l in links)
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "user": user,
+        "profile": profile,
+        "links": links,
+        "total_clicks": total_clicks,
+        "total_earnings": total_earnings,
+        "total_links": len(links)
+    })
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_dashboard(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        print("❌ Tidak ada token")
+        return RedirectResponse("/login")
+
+    try:
+        user = supabase.auth.get_user(token).user
+    except Exception as e:
+        print("❌ Gagal ambil user dari token:", e)
+        return RedirectResponse("/login")
+
+    try:
+        profile = get_user_profile(user.id)
+        if not profile:
+            print("❌ Profil user tidak ditemukan")
+            return HTMLResponse("<h3>Profile not found</h3>")
+        if profile["role"] != "admin":
+            print("❌ Bukan admin")
+            return HTMLResponse("<h3>Access denied</h3>")
+
+        # Ambil semua data
+        users = supabase.table("user_profiles").select("*").execute().data
+        links = supabase.table("links").select("*").execute().data
+        withdrawals = supabase.table("withdrawals").select("*").execute().data
+
+        # Statistik
+        total_clicks = sum(link.get("clicks", 0) for link in links)
+        total_earnings = sum(link.get("earnings", 0.0) for link in links)
+
+        return templates.TemplateResponse("admin.html", {
+            "request": request,
+            "user": user,
+            "users": users,
+            "links": links,
+            "withdrawals": withdrawals,
+            "total_clicks": total_clicks,
+            "total_earnings": total_earnings,
+            "total_users": len(users),
+            "total_links": len(links)
+        })
+    except Exception as e:
+        print("❌ Error di route /admin:", e)
+        return HTMLResponse(f"<h3>Internal error: {e}</h3>")
 
 
 @app.post("/shorten")
@@ -143,6 +208,8 @@ async def withdraw(request: Request, amount: float = Form(...)):
         if link["earnings"] <= remaining:
             remaining -= link["earnings"]
             supabase.table("links").update({"earnings": 0}).eq("id", link["id"]).execute()
+            supabase.table("user_profiles").update({"last_withdraw": datetime.utcnow().isoformat()}).eq("id", user.id).execute()
+
         else:
             supabase.table("links").update({"earnings": link["earnings"] - remaining}).eq("id", link["id"]).execute()
             remaining = 0
