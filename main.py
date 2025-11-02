@@ -78,47 +78,39 @@ def dashboard(request: Request):
 def admin_dashboard(request: Request):
     token = request.cookies.get("access_token")
     if not token:
-        print("❌ Tidak ada token")
-        return RedirectResponse("/login")
+        return RedirectResponse("/login", status_code=302)
 
     try:
         user = supabase.auth.get_user(token).user
     except Exception as e:
-        print("❌ Gagal ambil user dari token:", e)
-        return RedirectResponse("/login")
+        print("Auth error:", e)
+        return RedirectResponse("/login", status_code=302)
 
-    try:
-        profile = get_user_profile(user.id)
-        if not profile:
-            print("❌ Profil user tidak ditemukan")
-            return HTMLResponse("<h3>Profile not found</h3>")
-        if profile["role"] != "admin":
-            print("❌ Bukan admin")
-            return HTMLResponse("<h3>Access denied</h3>")
+    # cek role admin
+    profile = get_user_profile(user.id)
+    if not profile or profile.get("role") != "admin":
+        return HTMLResponse("<h3>Access denied</h3>")
 
-        # Ambil semua data
-        users = supabase.table("user_profiles").select("*").execute().data
-        links = supabase.table("links").select("*").execute().data
-        withdrawals = supabase.table("withdrawals").select("*").execute().data
+    # ambil semua user
+    users = supabase.table("user_profiles").select("*").execute().data or []
 
-        # Statistik
-        total_clicks = sum(link.get("clicks", 0) for link in links)
-        total_earnings = sum(link.get("earnings", 0.0) for link in links)
+    # ambil statistik global
+    links = supabase.table("links").select("clicks, earnings").execute().data or []
 
-        return templates.TemplateResponse("admin.html", {
-            "request": request,
-            "user": user,
-            "users": users,
-            "links": links,
-            "withdrawals": withdrawals,
-            "total_clicks": total_clicks,
-            "total_earnings": total_earnings,
-            "total_users": len(users),
-            "total_links": len(links)
-        })
-    except Exception as e:
-        print("❌ Error di route /admin:", e)
-        return HTMLResponse(f"<h3>Internal error: {e}</h3>")
+    total_clicks = sum([l.get("clicks", 0) or 0 for l in links])
+    total_earnings = sum([float(l.get("earnings", 0) or 0) for l in links])
+
+    stats = {
+        "total_clicks": total_clicks,
+        "total_earnings": total_earnings,
+    }
+
+    return templates.TemplateResponse("admin.html", {
+        "request": request,
+        "users": users,
+        "stats": stats,
+        "user": profile
+    })
 
 
 @app.post("/shorten")

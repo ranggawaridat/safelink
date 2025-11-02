@@ -1,38 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Withdraw</title>
-  <style>
-    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    h2 { margin-top: 1rem; }
-  </style>
-</head>
-<body>
-  <h1>💵 Withdraw Balance</h1>
+{% extends "base.html" %}
+{% block title %}Withdraw{% endblock %}
+{% block content %}
+<h2>Withdraw Saldo</h2>
+<p>Saldo anda saat ini: <strong>${{ "%.2f"|format(balance) }}</strong></p>
 
-  <p>Saldo kamu: <strong>${{ "%.2f"|format(balance) }}</strong></p>
+<form method="post" action="/withdraw">
+    <label>Jumlah (minimum $5)</label>
+    <input type="number" step="0.01" name="amount" min="5" required>
 
-  <form method="post" action="/withdraw">
-    <label>Email PayPal:</label><br>
-    <input type="email" name="paypal_email" required><br><br>
+    <label>Email PayPal</label>
+    <input type="email" name="paypal_email" required>
 
-    <label>Jumlah ($):</label><br>
-    <input type="number" name="amount" step="0.01" required><br><br>
+    <button type="submit">Ajukan Withdraw</button>
+</form>
 
-    <button type="submit">Kirim Permintaan Withdraw</button>
-  </form>
-
-  <h2>Riwayat Withdraw</h2>
-  <table>
-    <tr><th>Tanggal</th><th>Jumlah</th><th>Status</th></tr>
-    {% for w in withdrawals %}
-      <tr>
-        <td>{{ w.created_at }}</td>
-        <td>${{ "%.2f"|format(w.amount) }}</td>
-        <td>{{ w.status }}</td>
-      </tr>
-    {% endfor %}
-  </table>
-</body>
-</html>
+<h3 style="margin-top:2rem;">Riwayat Withdraw</h3>
+<table>
+  <tr><th>ID</th><th>Jumlah</th><th>Status</th><th>Tanggal</th></tr>
+  {% for w in withdrawals %}
+  <tr>
+    <td>{{ w.id }}</td>
+    <td>${{ "%.2f"|format(w.amount) }}</td>
+    <td>{{ w.status }}</td>
+    <td>{{ w.created_at }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
