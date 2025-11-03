@@ -22,7 +22,6 @@ def dashboard(request: Request):
     links = supabase.table("links").select("*").eq("user_id", user.id).execute().data
 
     total_clicks = sum(l["clicks"] for l in links)
-    total_earnings = sum(l["earnings"] for l in links)
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -30,6 +29,5 @@ def dashboard(request: Request):
         "profile": profile,
         "links": links,
         "total_clicks": total_clicks,
-        "total_earnings": total_earnings,
         "total_links": len(links)
     })

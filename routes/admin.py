@@ -29,14 +29,12 @@ def admin_dashboard(request: Request):
     users = supabase.table("user_profiles").select("*").execute().data or []
 
     # ambil statistik global
-    links = supabase.table("links").select("clicks, earnings").execute().data or []
+    links = supabase.table("links").select("clicks").execute().data or []
 
     total_clicks = sum([l.get("clicks", 0) or 0 for l in links])
-    total_earnings = sum([float(l.get("earnings", 0) or 0) for l in links])
-
+  
     stats = {
         "total_clicks": total_clicks,
-        "total_earnings": total_earnings,
     }
 
     return templates.TemplateResponse("admin.html", {

@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from routes import auth, dashboard, links, withdraw, admin
+from routes import auth, dashboard, links, admin
 
 app = FastAPI()
 
@@ -21,7 +21,6 @@ async def home(request: Request):
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(links.router)
-app.include_router(withdraw.router)
 app.include_router(admin.router)
 
 

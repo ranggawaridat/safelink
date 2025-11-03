@@ -1,97 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Shortlink App{% endblock %}</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --secondary: #f3f4f6;
-            --text-dark: #1f2937;
-            --text-light: #6b7280;
-        }
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--secondary);
-            color: var(--text-dark);
-        }
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        header a {
-            color: white;
-            text-decoration: none;
-            margin-left: 1rem;
-        }
-        .container {
-            max-width: 960px;
-            margin: 2rem auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.6rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover { background: #1e40af; }
-        input {
-            width: 100%;
-            padding: 0.6rem;
-            margin: 0.5rem 0;
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            border: 1px solid #e5e7eb;
-            padding: 8px;
-            text-align: left;
-        }
-        th { background-color: #f9fafb; }
-        .text-center { text-align: center; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ShortLink App{% endblock %}</title>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1e40af;
+      --accent: #f0f4ff;
+      --bg: #f9fafb;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 0.8rem;
+      border-radius: var(--radius);
+    }
+
+    nav a:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    h1, h2, h3 {
+      color: var(--text-dark);
+      margin-top: 0;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      margin: 0.5rem 0 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.8rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--accent);
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+
+    tr:hover td {
+      background-color: #f3f4f6;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-light);
+      padding: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      nav {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .container {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+
+      result-box {
+        margin-top: 1.5rem;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 10px;
+        padding: 1rem;
+      }
+
+      .result-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .result-link input {
+        flex: 1;
+        padding: 0.6rem;
+        border: 1px solid #93c5fd;
+        border-radius: 8px;
+        font-family: monospace;
+      }
+
+      .result-link button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+    }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h2>🔗 ShortLink App</h2>
-        <nav>
-          {% if user %}
-  <a href="/dashboard">Dashboard</a>
-  {% if user.role == "admin" %}
-    <a href="/admin">Admin</a>
-  {% endif %}
-  <a href="/logout">Logout</a>
-{% else %}
-  <a href="/login">Login</a>
-  <a href="/register">Register</a>
-{% endif %}
+  <header>
+    <h2>🔗 ShortLink App</h2>
+    <nav>
+      {% if user %}
+        <a href="/dashboard">Dashboard</a>
+        {% if user.role == "admin" %}
+          <a href="/admin">Admin</a>
+        {% endif %}
+          <a href="/logout">Logout</a>
+      {% else %}
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+      {% endif %}
+    </nav>
+  </header>
 
-            <a href="/dashboard">Dashboard</a>
-            <a href="/withdraw">Withdraw</a>
-            <a href="/logout">Logout</a>
-        </nav>
-    </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
 
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
+  <footer>
+    &copy; {{ year or "2025" }} ShortLink App
+  </footer>
 </body>
 </html>
-

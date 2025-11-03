@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from config import supabase, EARNING_PER_CLICK
+from config import supabase
 from services.utils import random_code
 
 templates = Jinja2Templates(directory="templates")
@@ -19,32 +19,48 @@ async def shorten(request: Request, url: str = Form(...)):
     except Exception:
         return RedirectResponse("/login")
     
-    code = random_code()
+    # generate slug unik
+    while True:
+        code = random_code()
+        existing = supabase.table("links").select("id").eq("short_code", code).execute()
+        if not existing.data:  # kalau belum ada di DB
+            break
+
+    # Simpan link baru
     supabase.table("links").insert({
-        "user_id": user.user.id, 
-        "original_url": url, 
+        "user_id": user.id,
+        "original_url": url,
         "short_code": code
-        }).execute()
-    
-    return RedirectResponse("/dashboard", status_code=302)
+    }).execute()
+
+    # ambil semua link untuk ditampilkan lagi
+    links = supabase.table("links").select("*").eq("user_id", user.id).execute().data
+
+    short_url = f"https://{request.url.hostname}/s/{code}"
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "user": user,
+        "links": links,
+        "short_url": short_url
+    })
 
 @router.get("/s/{code}", response_class=HTMLResponse)
 async def redirect_link(request: Request, code: str):
-    res = supabase.table("links").select("*").eq("short_code", code).single().execute()
-    if not res.data:
+    res = supabase.table("links").select("*").eq("short_code", code).execute()
+    
+    if not res.data or len(res.data) == 0:
         return HTMLResponse("<h3>Link not found</h3>")
 
-    # update clicks dan earnings
-    new_clicks = res.data["clicks"] + 1
-    new_earnings = round(res.data.get("earnings", 0) + EARNING_PER_CLICK, 2)
+    link = res.data[0]  # ambil dict pertama
+
+    new_clicks = link["clicks"] + 1
 
     supabase.table("links").update({
-        "clicks": new_clicks,
-        "earnings": new_earnings
+        "clicks": new_clicks
     }).eq("short_code", code).execute()
 
     return templates.TemplateResponse("ad.html", {
         "request": request,
-        "original_url": res.data["original_url"]
+        "original_url": link["original_url"]
     })
-

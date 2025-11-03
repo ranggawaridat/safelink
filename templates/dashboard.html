@@ -1,37 +1,67 @@
 {% extends "base.html" %}
+{% block title %}Dashboard - ShortLink App{% endblock %}
 {% block content %}
-<h3>Dashboard</h3>
-<form method="post" action="/shorten">
-  <input type="text" name="url" placeholder="Masukkan URL..." required>
-  <button type="submit">Shorten</button>
-</form>
 
-{% if error %}
-<p style="color:red">{{ error }}</p>
-{% endif %}
+<h2 style="margin-bottom: 1rem;">Selamat datang, {{ user.name if user else 'Pengguna' }} 👋</h2>
 
-{% if success %}
-<p style="color:green">{{ success }}</p>
-{% endif %}
+<section style="margin-bottom: 2rem;">
+  <h3>Buat Shortlink Baru</h3>
+  <form method="post" action="/shorten" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <input type="url" name="url" placeholder="Masukkan URL panjangmu di sini..." required style="flex: 1;">
+    <button type="submit">Shorten</button>
+  </form>
 
-<h4>Request Withdraw (minimal $5)</h4>
-<form method="post" action="/withdraw">
-  <input type="number" step="0.01" name="amount" placeholder="Jumlah $ untuk withdraw" required>
-  <button type="submit">Withdraw</button>
-</form>
+{% if short_url %}
+  <div style="margin-top: 1rem; background: #ecfdf5; padding: 0.8rem 1rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+    <div style="color: #047857;">
+      ✅ Shortlink kamu: 
+      <a href="{{ short_url }}" target="_blank" style="color: #059669; font-weight: bold;">{{ short_url }}</a>
+    </div>
+    <button onclick="navigator.clipboard.writeText('{{ short_url }}')" style="background: #10b981; color: white; border: none; border-radius: 5px; padding: 0.4rem 0.8rem; cursor: pointer;">
+      Copy
+    </button>
+  </div>
+  {% endif %}
+</section>
 
+<section style="margin-bottom: 2rem;">
+  <h3>Statistik & Saldo</h3>
+  <div style="background: #f3f4f6; border-radius: 10px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <p>Total Link: <strong>{{ links|length }}</strong></p>
+      <p>Total Klik: <strong>{{ total_clicks }}</strong></p>
+    </div>
+  </div>
+</section>
 
-
-<h4>Daftar Link:</h4>
-<ul>
-  {% for link in links %}
-  <li>
-    <a href="/s/{{ link.short_code }}" target="_blank">
-      {{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}
-    </a> → {{ link.original_url }}
-    ({{ link.clicks }} klik, ${{ link.earnings }} earned)
-  </li>
-  {% endfor %}
-</ul>
+<section>
+  <h3>Daftar Link Kamu</h3>
+  {% if links %}
+  <table>
+    <thead>
+      <tr>
+        <th>Short URL</th>
+        <th>Asli</th>
+        <th>Klik</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for link in links %}
+      <tr>
+        <td>
+          <a href="/s/{{ link.short_code }}" target="_blank">
+            {{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}
+          </a>
+        </td>
+        <td style="word-break: break-all;">{{ link.original_url }}</td>
+        <td>{{ link.clicks }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p style="color: var(--text-light);">Belum ada link yang dibuat. Yuk, mulai perpendek URL pertamamu!</p>
+  {% endif %}
+</section>
 
 {% endblock %}

@@ -3,22 +3,18 @@
 {% block content %}
 <h2>Admin Dashboard</h2>
 
-<p><a href="/admin/withdrawals">💵 Kelola Withdraw</a></p>
-
 <h3>Statistik Global</h3>
 <ul>
   <li>Total Klik: {{ stats.total_clicks }}</li>
-  <li>Total Earnings: ${{ "%.2f"|format(stats.total_earnings) }}</li>
 </ul>
 
 <h3>Daftar User</h3>
 <table>
-  <tr><th>Email</th><th>Role</th><th>Last Withdraw</th></tr>
+  <tr><th>Email</th><th>Role</th></tr>
   {% for u in users %}
   <tr>
     <td>{{ u.email }}</td>
     <td>{{ u.role }}</td>
-    <td>{{ u.last_withdraw }}</td>
   </tr>
   {% endfor %}
 </table>
