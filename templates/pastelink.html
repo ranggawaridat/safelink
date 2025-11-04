@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}PasteLink - ShortLink App{% endblock %}
+
+{% block content %}
+<h2>Kelola PasteLink 📝</h2>
+
+<section style="margin-top: 1rem;">
+  <h3>Buat PasteLink Baru</h3>
+  <form method="post" action="/pastelink" style="display: flex; flex-direction: column; gap: 0.8rem;">
+    <textarea name="content" rows="6" placeholder="Tulis sesuatu di sini..." required></textarea>
+    <button type="submit">Buat PasteLink</button>
+  </form>
+</section>
+
+<hr style="margin: 2rem 0;">
+
+<section>
+  <h3>Daftar PasteLink Kamu</h3>
+  {% if pastes %}
+  <table>
+    <thead>
+      <tr>
+        <th>Paste URL</th>
+        <th>Isi Singkat</th>
+        <th>Klik</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for paste in pastes %}
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <a href="/p/{{ paste.short_code }}" target="_blank">
+              {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ paste.short_code }}
+            </a>
+            <button onclick="navigator.clipboard.writeText('{{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ paste.short_code }}')" style="background: #10b981; color: white; border: none; border-radius: 5px; padding: 0.3rem 0.6rem; cursor: pointer;">Copy</button>
+          </div>
+        </td>
+        <td style="word-break: break-all;">
+          {{ paste.content[:60] ~ ('...' if paste.content|length > 60 else '') }}
+        </td>
+        <td>{{ paste.clicks if paste.clicks else 0 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #6b7280;">Belum ada PasteLink yang dibuat.</p>
+  {% endif %}
+</section>
+{% endblock %}

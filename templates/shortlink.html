@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Shortlink - ShortLink App{% endblock %}
+
+{% block content %}
+<h2>Kelola Shortlink 🔗</h2>
+
+<section style="margin-top: 1rem;">
+  <h3>Buat Shortlink Baru</h3>
+  <form method="post" action="/shortlink" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <input type="url" name="url" placeholder="Masukkan URL panjang..." required style="flex: 1;">
+    <button type="submit">Shorten</button>
+  </form>
+</section>
+
+<hr style="margin: 2rem 0;">
+
+<section>
+  <h3>Daftar Shortlink Kamu</h3>
+  {% if links %}
+  <table>
+    <thead>
+      <tr>
+        <th>Short URL</th>
+        <th>Asli</th>
+        <th>Klik</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for link in links %}
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <a href="/s/{{ link.short_code }}" target="_blank">
+              {{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}
+            </a>
+            <button onclick="navigator.clipboard.writeText('{{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}')" style="background: #10b981; color: white; border: none; border-radius: 5px; padding: 0.3rem 0.6rem; cursor: pointer;">Copy</button>
+          </div>
+        </td>
+        <td style="word-break: break-all;">{{ link.original_url }}</td>
+        <td>{{ link.clicks }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: #6b7280;">Belum ada shortlink yang dibuat.</p>
+  {% endif %}
+</section>
+{% endblock %}

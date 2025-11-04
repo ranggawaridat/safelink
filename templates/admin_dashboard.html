@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<section style="margin-top: 1rem;">
+  <h3>Statistik Global</h3>
+  <div style="background: #f9fafb; border-radius: 10px; padding: 1rem; display: flex; gap: 2rem;">
+    <div>
+      <p>Total Pengguna: <strong>{{ stats.total_users }}</strong></p>
+      <p>Total Shortlink: <strong>{{ stats.total_links }}</strong></p>
+      <p>Total PasteLink: <strong>{{ stats.total_pastes }}</strong></p>
+      <p>Total Klik (semua link): <strong>{{ stats.total_clicks }}</strong></p>
+    </div>
+  </div>
+</section>
+
+<hr style="margin: 2rem 0;">
+
+<section>
+  <h3>Daftar Pengguna</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Jumlah Link</th>
+        <th>Jumlah Paste</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role or 'user' }}</td>
+        <td>{{ u.link_count }}</td>
+        <td>{{ u.paste_count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<hr style="margin: 2rem 0;">
+
+<section>
+  <h3>Link Terbaru</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Short URL</th>
+        <th>Target</th>
+        <th>Klik</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for link in latest_links %}
+      <tr>
+        <td>{{ link.user_email }}</td>
+        <td>
+          <a href="/s/{{ link.short_code }}" target="_blank">
+            {{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}
+          </a>
+        </td>
+        <td style="word-break: break-all;">{{ link.original_url }}</td>
+        <td>{{ link.clicks }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<hr style="margin: 2rem 0;">
+
+<section>
+  <h3>PasteLink Terbaru</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Short URL</th>
+        <th>Isi Singkat</th>
+        <th>Klik</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in latest_pastes %}
+      <tr>
+        <td>{{ p.user_email }}</td>
+        <td>
+          <a href="/p/{{ p.short_code }}" target="_blank">
+            {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ p.short_code }}
+          </a>
+        </td>
+        <td>{{ p.content[:60] ~ ('...' if p.content|length > 60 else '') }}</td>
+        <td>{{ p.clicks }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

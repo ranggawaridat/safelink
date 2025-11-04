@@ -199,6 +199,8 @@
     <nav>
       {% if user %}
         <a href="/dashboard">Dashboard</a>
+        <a href="/shortlink">Shortlink</a>
+        <a href="/pastelink">Pastelink</a>
         {% if user.role == "admin" %}
           <a href="/admin">Admin</a>
         {% endif %}
