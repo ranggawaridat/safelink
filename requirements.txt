@@ -5,3 +5,4 @@ python-dotenv
 supabase
 httpx
 gunicorn
+python-multipart
