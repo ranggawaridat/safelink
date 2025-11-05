@@ -17,6 +17,11 @@ def dashboard(request: Request):
     except Exception:
         return RedirectResponse("/login", status_code=302)
 
+    # Ambil role user dari table user_profiles
+    profile_data = supabase.table("user_profiles").select("role").eq("id", user.id).execute()
+    role = profile_data.data[0]["role"] if profile_data.data else "user"  # default: user
+    is_admin = role == "admin"
+
     # Ambil semua shortlink dan pastelink milik user
     links = (
         supabase.table("links")
@@ -46,10 +51,11 @@ def dashboard(request: Request):
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
-        "user": user,  # pakai email saja
+        "user": user,
+        "is_admin": is_admin,
         "total_links": len(links),
         "total_pastes": len(pastes),
-        "total_clicks": total_clicks,
-        "recent_links": links_sorted,
-        "recent_pastes": pastes_sorted
+        "total_clicks": sum((l.get("clicks") or 0) for l in links) + sum((p.get("clicks") or 0) for p in pastes),
+        "recent_links": sorted(links, key=lambda x: x.get("created_at") or "", reverse=True)[:5],
+        "recent_pastes": sorted(pastes, key=lambda x: x.get("created_at") or "", reverse=True)[:5],
     })

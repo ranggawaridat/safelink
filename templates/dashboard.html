@@ -22,32 +22,6 @@
   {% if recent_links %}
   <table>
     <thead>
-      <tr><th>Short</th><th>Asli</th><th>Klik</th></tr>
-    </thead>
-    <tbody>
-      {% for link in recent_links %}
-      <tr>
-        <td><a href="/s/{{ link.short_code }}" target="_blank">{{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}</a></td>
-        <td style="word-break: break-all;">{{ link.original_url }}</td>
-        <td>{{ link.clicks or 0 }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <a href="/shortlink">Lihat semua ➜</a>
-  {% else %}
-  <p>Belum ada shortlink yang dibuat.</p>
-  {% endif %}
-</section>
-
-<hr style="margin: 2rem 0;">
-
-<section>
-  <h3>PasteLink Terbaru</h3>
-  {% if recent_pastes %}
-
-  <table>
-    <thead>
       <tr>
         <th>Short</th>
         <th>Asli</th>
@@ -66,7 +40,41 @@
       {% endfor %}
     </tbody>
   </table>
+  <a href="/shortlink">Lihat semua ➜</a>
+  {% else %}
+  <p>Belum ada shortlink yang dibuat.</p>
+  {% endif %}
+</section>
 
+<hr style="margin: 2rem 0;">
+
+<section>
+  <h3>PasteLink Terbaru</h3>
+  {% if recent_pastes %}
+  <table>
+    <thead>
+      <tr>
+        <th>URL</th>
+        <th>Isi Singkat</th>
+        <th>Klik</th>
+        <th>Dibuat</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for paste in recent_pastes %}
+      <tr>
+        <td>
+          <a href="/p/{{ paste.short_code }}" target="_blank">
+            {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ paste.short_code }}
+          </a>
+        </td>
+        <td>{{ paste.content[:60] ~ ('...' if paste.content|length > 60 else '') }}</td>
+        <td>{{ paste.clicks or 0 }}</td>
+        <td>{{ paste.created_at[:19].replace('T', ' ') if paste.created_at else '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   <a href="/pastelink">Lihat semua ➜</a>
   {% else %}
   <p>Belum ada PasteLink yang dibuat.</p>

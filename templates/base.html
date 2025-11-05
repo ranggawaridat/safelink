@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}ShortLink App{% endblock %}</title>
+  <title>{% block title %}Safelinku App{% endblock %}</title>
+
+  {% block head %}
+    <!-- extra scripts or styles can go here -->
+  {% endblock %}
 
   <style>
     :root {
@@ -195,14 +199,14 @@
 
 <body>
   <header>
-    <h2><a href="{{ url_for('root') }}" style="text-decoration: none; color: inherit;">🔗 Safelinku</a></h2>
+    <h2><a href="{{ url_for('root') }}" style="text-decoration: none; color: inherit;">🔗 Safelinku App</a></h2>
     
     <nav>
       {% if user %}
         <a href="/dashboard">Dashboard</a>
         <a href="/shortlink">Shortlink</a>
         <a href="/pastelink">Pastelink</a>
-        {% if user.role == "admin" %}
+        {% if is_admin %}
           <a href="/admin">Admin</a>
         {% endif %}
           <a href="/logout">Logout</a>
