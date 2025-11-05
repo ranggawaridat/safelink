@@ -195,7 +195,8 @@
 
 <body>
   <header>
-    <h2>🔗 Safelinku</h2>
+    <h2><a href="{{ url_for('root') }}" style="text-decoration: none; color: inherit;">🔗 Safelinku</a></h2>
+    
     <nav>
       {% if user %}
         <a href="/dashboard">Dashboard</a>

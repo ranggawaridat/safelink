@@ -9,8 +9,18 @@ router = APIRouter(tags=["auth"])
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     msg = request.query_params.get("msg")
-    return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
 
+    # cek apakah sudah login
+    token = request.cookies.get("access_token")
+    if token:
+        try:
+            # verifikasi token untuk memastikan masih valid
+            supabase.auth.get_user(token)
+            return RedirectResponse(url="/dashboard", status_code=302)
+        except Exception:
+            pass  # kalau token invalid, biarkan lanjut ke halaman login
+
+    return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
 
 
 @router.post("/login")
@@ -18,11 +28,20 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
     try:
         auth = supabase.auth.sign_in_with_password({"email": email, "password": password})
         session = auth.session
+
+         # 🪄 arahkan ke dashboard dan simpan access_token di cookie
         response = RedirectResponse("/dashboard", status_code=302)
-        response.set_cookie(key="access_token", value=session.access_token, httponly=True)
+        response.set_cookie(
+            key="access_token",
+            value=session.access_token,
+            httponly=True,
+            max_age=60 * 60 * 24 * 7,  # 7 hari
+            secure=False,  # ubah True kalau pakai HTTPS
+            samesite="lax"
+        )
         return response
     except Exception as e:
-        return templates.TemplateResponse("login.html", {"request": request, "error": str(e)})
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Email atau password salah"})
 
 
 @router.get("/register", response_class=HTMLResponse)

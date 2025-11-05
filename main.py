@@ -2,11 +2,17 @@ from fastapi import FastAPI, Request, Form, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+import os
 
 from routes import admin, auth, dashboard, shortlink, pastelink, redirect_shortlink, redirect_pastelink
 
-app = FastAPI(title="SafeLinku", version="1.0")
+is_dev = os.getenv("ENV", "dev") == "dev"
 
+app = FastAPI(
+    title="Safelinku",
+    docs_url="/docs" if is_dev else None,
+    redoc_url="/redoc" if is_dev else None,
+)
 
 # Static files (jika kamu punya folder css/js di /static)
 app.mount("/static", StaticFiles(directory="static"), name="static")
