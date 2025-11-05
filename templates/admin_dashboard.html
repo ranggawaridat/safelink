@@ -1,104 +1,129 @@
 {% extends "base.html" %}
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Admin Dashboard - Safelinku{% endblock %}
 
 {% block content %}
-<h2>Admin Dashboard</h2>
+<h2>📊 Admin Dashboard</h2>
 
-<section style="margin-top: 1rem;">
-  <h3>Statistik Global</h3>
-  <div style="background: #f9fafb; border-radius: 10px; padding: 1rem; display: flex; gap: 2rem;">
-    <div>
-      <p>Total Pengguna: <strong>{{ stats.total_users }}</strong></p>
-      <p>Total Shortlink: <strong>{{ stats.total_links }}</strong></p>
-      <p>Total PasteLink: <strong>{{ stats.total_pastes }}</strong></p>
-      <p>Total Klik (semua link): <strong>{{ stats.total_clicks }}</strong></p>
-    </div>
+<!-- Tombol Aksi -->
+<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+  <form action="/admin/reset" method="post">
+    <button type="submit">🔥 Reset Semua Data</button>
+  </form>
+  <a href="/admin/export/links"><button>⬇️ Export Links</button></a>
+  <a href="/admin/export/pastes"><button>⬇️ Export Pastes</button></a>
+</div>
+
+<!-- Konfirmasi Reset -->
+{% if confirm == "true" %}
+<div style="background: #fef3c7; border: 1px solid #facc15; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
+  <h3>⚠️ Konfirmasi Reset</h3>
+  <p>Semua data <b>links</b> dan <b>pastes</b> akan dihapus permanen. Lanjutkan?</p>
+  <form action="/admin/reset?confirm=true" method="post" style="display:inline;">
+    <button style="background:#dc2626;">Ya, Hapus Semua</button>
+  </form>
+  <a href="/admin"><button style="background:#6b7280;">Batal</button></a>
+</div>
+{% endif %}
+
+<!-- Statistik -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+  <div style="background: var(--accent); border-radius: var(--radius); padding: 1rem; text-align: center;">
+    <h4>Total Pengguna</h4>
+    <p style="font-size: 1.8rem; font-weight: 600;">{{ stats.total_users }}</p>
   </div>
-</section>
 
-<hr style="margin: 2rem 0;">
+  <div style="background: var(--accent); border-radius: var(--radius); padding: 1rem; text-align: center;">
+    <h4>Total Links</h4>
+    <p style="font-size: 1.8rem; font-weight: 600;">{{ stats.total_links }}</p>
+    <small>{{ stats.avg_clicks_per_link }} avg klik/link</small>
+  </div>
 
-<section>
-  <h3>Daftar Pengguna</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Jumlah Link</th>
-        <th>Jumlah Paste</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in users %}
-      <tr>
-        <td>{{ u.email }}</td>
-        <td>{{ u.role or 'user' }}</td>
-        <td>{{ u.link_count }}</td>
-        <td>{{ u.paste_count }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+  <div style="background: var(--accent); border-radius: var(--radius); padding: 1rem; text-align: center;">
+    <h4>Total Pastes</h4>
+    <p style="font-size: 1.8rem; font-weight: 600;">{{ stats.total_pastes }}</p>
+    <small>{{ stats.avg_clicks_per_paste }} avg klik/paste</small>
+  </div>
 
-<hr style="margin: 2rem 0;">
+  <div style="background: var(--accent); border-radius: var(--radius); padding: 1rem; text-align: center;">
+    <h4>Total Klik</h4>
+    <p style="font-size: 1.8rem; font-weight: 600;">{{ stats.total_clicks_all }}</p>
+  </div>
+</div>
 
-<section>
-  <h3>Link Terbaru</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Short URL</th>
-        <th>Target</th>
-        <th>Klik</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for link in latest_links %}
-      <tr>
-        <td>{{ link.user_email }}</td>
-        <td>
-          <a href="/s/{{ link.short_code }}" target="_blank">
-            {{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}
-          </a>
-        </td>
-        <td style="word-break: break-all;">{{ link.original_url }}</td>
-        <td>{{ link.clicks }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+<!-- Statistik per User -->
+<h3>📋 Statistik per Pengguna</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Links</th>
+      <th>Pastes</th>
+      <th>Total Klik</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.email }}</td>
+      <td>{{ u.role }}</td>
+      <td>{{ u.link_count }}</td>
+      <td>{{ u.paste_count }}</td>
+      <td>{{ u.total_clicks }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
-<hr style="margin: 2rem 0;">
+<!-- Data Terbaru -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+  <div>
+    <h3>🔗 Link Terbaru</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Klik</th>
+          <th>Tanggal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in latest_links %}
+        <tr>
+          <td>{{ l.id }}</td>
+          <td>{{ l.user_id }}</td>
+          <td>{{ l.clicks }}</td>
+          <td>{{ l.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-<section>
-  <h3>PasteLink Terbaru</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Short URL</th>
-        <th>Isi Singkat</th>
-        <th>Klik</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in latest_pastes %}
-      <tr>
-        <td>{{ p.user_email }}</td>
-        <td>
-          <a href="/p/{{ p.short_code }}" target="_blank">
-            {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ p.short_code }}
-          </a>
-        </td>
-        <td>{{ p.content[:60] ~ ('...' if p.content|length > 60 else '') }}</td>
-        <td>{{ p.clicks }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+  <div>
+    <h3>📝 Paste Terbaru</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Klik</th>
+          <th>Tanggal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in latest_pastes %}
+        <tr>
+          <td>{{ p.id }}</td>
+          <td>{{ p.user_id }}</td>
+          <td>{{ p.clicks }}</td>
+          <td>{{ p.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}
