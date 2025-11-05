@@ -101,38 +101,6 @@ def admin_dashboard(request: Request):
         "confirm": confirm,
     })
 
-# --- RESET (dengan dua langkah konfirmasi) ---
-@router.post("/reset")
-def reset_data(request: Request):
-    token = request.cookies.get("access_token")
-    if not token:
-        return RedirectResponse("/login", status_code=302)
-
-    try:
-        user = supabase.auth.get_user(token).user
-    except Exception:
-        return RedirectResponse("/login", status_code=302)
-
-    profile_query = supabase.table("user_profiles").select("*").eq("id", user.id).execute()
-    if not profile_query.data:
-        return HTMLResponse("<h3>Profile not found</h3>", status_code=404)
-
-    profile = profile_query.data[0]
-    if profile["role"] != "admin":
-        return HTMLResponse("<h3>Unauthorized</h3>", status_code=403)
-
-    # Cek apakah sudah konfirmasi
-    confirm = request.query_params.get("confirm")
-    if confirm != "true":
-        # Langkah pertama → tampilkan halaman konfirmasi
-        return RedirectResponse("/admin?confirm=true", status_code=302)
-
-    # Langkah kedua → hapus semua data
-    supabase.table("links").delete().neq("id", 0).execute()
-    supabase.table("pastes").delete().neq("id", 0).execute()
-
-    return RedirectResponse("/admin?reset=success", status_code=302)
-
 
 # --- EXPORT BACKUP CSV ---
 @router.get("/export/{datatype}")

@@ -6,24 +6,9 @@
 
 <!-- Tombol Aksi -->
 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
-  <form action="/admin/reset" method="post">
-    <button type="submit">🔥 Reset Semua Data</button>
-  </form>
   <a href="/admin/export/links"><button>⬇️ Export Links</button></a>
   <a href="/admin/export/pastes"><button>⬇️ Export Pastes</button></a>
 </div>
-
-<!-- Konfirmasi Reset -->
-{% if confirm == "true" %}
-<div style="background: #fef3c7; border: 1px solid #facc15; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
-  <h3>⚠️ Konfirmasi Reset</h3>
-  <p>Semua data <b>links</b> dan <b>pastes</b> akan dihapus permanen. Lanjutkan?</p>
-  <form action="/admin/reset?confirm=true" method="post" style="display:inline;">
-    <button style="background:#dc2626;">Ya, Hapus Semua</button>
-  </form>
-  <a href="/admin"><button style="background:#6b7280;">Batal</button></a>
-</div>
-{% endif %}
 
 <!-- Statistik -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
