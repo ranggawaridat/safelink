@@ -1,16 +1,44 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<h2>Login</h2>
-<form method="post" action="/login">
-    <label>Email</label>
-    <input type="email" name="email" required>
+  <h2>Login</h2>
 
-    <label>Password</label>
-    <input type="password" name="password" required>
+  {% if error %}
+    <div style="
+      background:#fee2e2;
+      color:#b91c1c;
+      padding:0.8rem 1rem;
+      border-radius:var(--radius);
+      margin-bottom:1rem;
+      border:1px solid #fecaca;
+    ">
+      ⚠️ {{ error }}
+    </div>
+  {% endif %}
 
-    <button type="submit">Login</button>
-</form>
+  {% if msg == "success" %}
+  <div style="
+    background:#dcfce7;
+    color:#166534;
+    padding:0.8rem 1rem;
+    border-radius:var(--radius);
+    margin-bottom:1rem;
+    border:1px solid #bbf7d0;
+  ">
+    ✅ Akun berhasil dibuat! Silakan login.
+  </div>
+{% endif %}
 
-<p>Belum punya akun? <a href="/register">Daftar disini</a></p>
+
+  <form method="post" action="/login">
+      <label>Email</label>
+      <input type="email" name="email" required>
+
+      <label>Password</label>
+      <input type="password" name="password" required>
+
+      <button type="submit">Login</button>
+  </form>
+
+  <p>Belum punya akun? <a href="/register">Daftar disini</a></p>
 {% endblock %}

@@ -1,5 +1,4 @@
 from datetime import datetime
-import re
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -21,7 +20,14 @@ def pastelink_page(request: Request):
     except Exception:
         return RedirectResponse("/login")
 
-    pastes = supabase.table("pastes").select("*").eq("user_id", user.id).execute().data
+    pastes = (
+        supabase.table("pastes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .execute()
+        .data or []
+    )
 
     return templates.TemplateResponse("pastelink.html", {
         "request": request,
@@ -57,7 +63,23 @@ def create_paste(request: Request, content: str = Form(...)):
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
-    return RedirectResponse("/pastelink", status_code=303)
+    full_url = f"{request.url.scheme}://{request.url.hostname}/p/{short_code}"
+
+    pastes = (
+        supabase.table("pastes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+
+    return templates.TemplateResponse("pastelink.html", {
+        "request": request,
+        "user": user,
+        "pastes": pastes,
+        "new_paste": {"full_url": full_url}
+    })
 
 
 @router.get("/p/{code}", response_class=HTMLResponse)

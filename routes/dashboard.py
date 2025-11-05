@@ -18,8 +18,24 @@ def dashboard(request: Request):
         return RedirectResponse("/login", status_code=302)
 
     # Ambil semua shortlink dan pastelink milik user
-    links = supabase.table("links").select("*").eq("user_id", user.id).execute().data or []
-    pastes = supabase.table("pastes").select("*").eq("user_id", user.id).execute().data or []
+    links = (
+        supabase.table("links")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .execute()
+        .data or []
+    )
+
+    pastes = (
+        supabase.table("pastes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .execute()
+        .data or []
+    )
+
 
     # Hitung total klik secara aman
     total_clicks = sum([(l.get("clicks") or 0) for l in links]) + sum([(p.get("clicks") or 0) for p in pastes])

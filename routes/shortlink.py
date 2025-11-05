@@ -20,12 +20,31 @@ def shortlink_page(request: Request):
     except Exception:
         return RedirectResponse("/login")
 
-    links = supabase.table("links").select("*").eq("user_id", user.id).execute().data
+    links = (
+        supabase.table("links")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", desc=True)
+        .execute()
+        .data or []
+    )
+
+
+    # ambil kode shortlink baru kalau ada
+    new_code = request.query_params.get("new")
+    new_link = None
+    if new_code:
+        base_url = f"{request.url.scheme}://{request.url.hostname}"
+        new_link = {
+            "full_url": f"{base_url}/s/{new_code}",
+            "short_code": new_code
+        }
 
     return templates.TemplateResponse("shortlink.html", {
         "request": request,
         "user": user,
-        "links": links
+        "links": links,
+        "new_link": new_link
     })
 
 
@@ -56,7 +75,8 @@ def create_shortlink(request: Request, url: str = Form(...)):
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
-    return RedirectResponse("/shortlink", status_code=303)
+    # redirect dengan pesan sukses
+    return RedirectResponse(f"/shortlink?new={short_code}", status_code=303)
 
 
 @router.get("/s/{short_code}")

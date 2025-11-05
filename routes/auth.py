@@ -8,7 +8,9 @@ router = APIRouter(tags=["auth"])
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    msg = request.query_params.get("msg")
+    return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
+
 
 
 @router.post("/login")
@@ -31,16 +33,18 @@ async def register_page(request: Request):
 @router.post("/register")
 async def register_post(request: Request, email: str = Form(...), password: str = Form(...)):
     try:
-        # create user via Supabase Auth (service role key)
         user = supabase.auth.admin.create_user({
             "email": email,
             "password": password,
-            "email_confirm": True  # Set to True if you want to auto-confirm the email
+            "email_confirm": True
         })
 
-        return RedirectResponse("/login", status_code=302)
+        # kirim pesan sukses via query parameter
+        response = RedirectResponse(url="/login?msg=success", status_code=302)
+        return response
     except Exception as e:
         return templates.TemplateResponse("register.html", {"request": request, "error": str(e)})
+
 
 @router.get("/logout")
 async def logout():

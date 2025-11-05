@@ -1,15 +1,30 @@
 {% extends "base.html" %}
+{% block title %}Register{% endblock %}
 {% block content %}
-<h3>Register</h3>
-<form method="post">
-  <label>Email:</label><br>
-  <input type="email" name="email" required><br>
-  <label>Password:</label><br>
-  <input type="password" name="password" required><br><br>
-  <button type="submit">Register</button>
-</form>
+  <h2>Daftar Akun Baru</h2>
 
-{% if error %}
-<p style="color:red">{{ error }}</p>
-{% endif %}
+  {% if error %}
+    <div style="
+      background:#fee2e2;
+      color:#b91c1c;
+      padding:0.8rem 1rem;
+      border-radius:var(--radius);
+      margin-bottom:1rem;
+      border:1px solid #fecaca;
+    ">
+      ⚠️ {{ error }}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/register">
+    <label>Email</label>
+    <input type="email" name="email" required>
+
+    <label>Password</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">Register</button>
+  </form>
+
+  <p>Sudah punya akun? <a href="/login">Login disini</a></p>
 {% endblock %}

@@ -1,14 +1,55 @@
 {% extends "base.html" %}
-{% block title %}PasteLink - ShortLink App{% endblock %}
+{% block title %}Safelinku - PasteLink{% endblock %}
 
 {% block content %}
 <h2>Kelola PasteLink 📝</h2>
 
+{% if new_paste %}
+  <div style="
+    background:#ecfdf5;
+    border:1px solid #a7f3d0;
+    border-radius:var(--radius);
+    padding:1rem 1.2rem;
+    margin-top:1rem;
+    margin-bottom:1.5rem;
+  ">
+    <p style="margin:0; color:#065f46; font-weight:600;">✅ PasteLink berhasil dibuat!</p>
+    <div style="margin-top:0.6rem; display:flex; align-items:center; gap:0.5rem;">
+      <input
+        type="text"
+        value="{{ new_paste.full_url }}"
+        readonly
+        style="flex:1; padding:0.6rem; border:1px solid #6ee7b7; border-radius:8px; background:white; font-family:monospace;"
+        id="newPasteInput"
+      >
+      <button
+        onclick="copyNewPaste()"
+        style="background:#10b981; color:white; border:none; border-radius:8px; padding:0.6rem 1rem; cursor:pointer;"
+      >Copy</button>
+    </div>
+  </div>
+
+  <script>
+    function copyNewPaste() {
+      const input = document.getElementById('newPasteInput');
+      navigator.clipboard.writeText(input.value);
+      const btn = event.target;
+      btn.innerText = 'Copied!';
+      btn.style.background = '#059669';
+      setTimeout(() => {
+        btn.innerText = 'Copy';
+        btn.style.background = '#10b981';
+      }, 1500);
+    }
+  </script>
+{% endif %}
+
 <section style="margin-top: 1rem;">
   <h3>Buat PasteLink Baru</h3>
-  <form method="post" action="/pastelink" style="display: flex; flex-direction: column; gap: 0.8rem;">
-    <textarea name="content" rows="6" placeholder="Tulis sesuatu di sini..." required></textarea>
-    <button type="submit">Buat PasteLink</button>
+  <form method="post" action="/pastelink" style="display:flex; flex-direction:column; gap:0.5rem;">
+    <textarea name="content" placeholder="Tulis pesan atau teks kamu di sini..." required rows="5"
+      style="resize:vertical; padding:0.6rem; border-radius:8px; border:1px solid #ccc;"></textarea>
+    <button type="submit">Paste!</button>
   </form>
 </section>
 
@@ -20,32 +61,35 @@
   <table>
     <thead>
       <tr>
-        <th>Paste URL</th>
+        <th>URL</th>
         <th>Isi Singkat</th>
         <th>Klik</th>
+        <th>Dibuat</th>
       </tr>
     </thead>
     <tbody>
-      {% for paste in pastes %}
+      {% for p in pastes %}
       <tr>
         <td>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <a href="/p/{{ paste.short_code }}" target="_blank">
-              {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ paste.short_code }}
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <a href="/p/{{ p.short_code }}" target="_blank">
+              {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ p.short_code }}
             </a>
-            <button onclick="navigator.clipboard.writeText('{{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ paste.short_code }}')" style="background: #10b981; color: white; border: none; border-radius: 5px; padding: 0.3rem 0.6rem; cursor: pointer;">Copy</button>
+            <button
+              onclick="navigator.clipboard.writeText('{{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ p.short_code }}'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',1500)"
+              style="background:#10b981; color:white; border:none; border-radius:5px; padding:0.3rem 0.6rem; cursor:pointer;"
+            >Copy</button>
           </div>
         </td>
-        <td style="word-break: break-all;">
-          {{ paste.content[:60] ~ ('...' if paste.content|length > 60 else '') }}
-        </td>
-        <td>{{ paste.clicks if paste.clicks else 0 }}</td>
+        <td>{{ p.content[:60] ~ ('...' if p.content|length > 60 else '') }}</td>
+        <td>{{ p.clicks or 0 }}</td>
+        <td>{{ p.created_at[:19].replace('T', ' ') if p.created_at else '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
-  <p style="color: #6b7280;">Belum ada PasteLink yang dibuat.</p>
+  <p style="color:#6b7280;">Belum ada PasteLink yang dibuat.</p>
   {% endif %}
 </section>
 {% endblock %}

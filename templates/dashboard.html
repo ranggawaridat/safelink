@@ -45,20 +45,28 @@
 <section>
   <h3>PasteLink Terbaru</h3>
   {% if recent_pastes %}
+
   <table>
     <thead>
-      <tr><th>URL</th><th>Isi Singkat</th><th>Klik</th></tr>
+      <tr>
+        <th>Short</th>
+        <th>Asli</th>
+        <th>Klik</th>
+        <th>Dibuat</th>
+      </tr>
     </thead>
     <tbody>
-      {% for p in recent_pastes %}
+      {% for link in recent_links %}
       <tr>
-        <td><a href="/p/{{ p.short_code }}" target="_blank">{{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ p.short_code }}</a></td>
-        <td>{{ p.content[:60] ~ ('...' if p.content|length > 60 else '') }}</td>
-        <td>{{ p.clicks or 0 }}</td>
+        <td><a href="/s/{{ link.short_code }}" target="_blank">{{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}</a></td>
+        <td style="word-break: break-all;">{{ link.original_url }}</td>
+        <td>{{ link.clicks or 0 }}</td>
+        <td>{{ link.created_at[:19].replace('T', ' ') if link.created_at else '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
   <a href="/pastelink">Lihat semua ➜</a>
   {% else %}
   <p>Belum ada PasteLink yang dibuat.</p>
