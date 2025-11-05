@@ -2,6 +2,9 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from config import supabase
 from fastapi.templating import Jinja2Templates
+import os
+
+is_dev = os.getenv("ENV", "dev") == "dev"
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(tags=["auth"])
@@ -36,7 +39,7 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
             value=session.access_token,
             httponly=True,
             max_age=60 * 60 * 24 * 7,  # 7 hari
-            secure=False,  # ubah True kalau pakai HTTPS
+            secure=not is_dev, # aktif hanya di HTTPS (production)
             samesite="lax"
         )
         return response
