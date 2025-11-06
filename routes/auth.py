@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from config import supabase
-import os
 from services.core import templates, get_user, is_admin
+import os
 
 is_dev = os.getenv("ENV", "dev") == "dev"
 
@@ -73,3 +73,52 @@ async def logout():
     # hapus cookie access_token
     response.delete_cookie("access_token")
     return response
+
+
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+@router.post("/forgot-password")
+async def forgot_password_post(request: Request, email: str = Form(...)):
+    try:
+        # kirim email reset password dari Supabase
+        redirect_url = "http://localhost:8000/reset-password" if is_dev else "https://safelinku.site/reset-password"
+        supabase.auth.reset_password_for_email(email)
+
+        msg = "Kami telah mengirimkan tautan reset password ke email kamu"
+        return templates.TemplateResponse("forgot_password.html", {"request": request, "msg": msg})
+    except Exception as e:
+        return templates.TemplateResponse("forgot_password.html", {"request": request, "error": str(e)})
+    
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request, access_token: str = None):
+    # kalau Supabase kirim #access_token=... (hash), ambilnya via frontend
+    # di sini kita cuma tampilkan form
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {"request": request, "access_token": access_token, "msg": None, "error": None}
+    )
+
+@router.post("/reset-password", response_class=HTMLResponse)
+async def reset_password_submit(
+    request: Request,
+    password: str = Form(...),
+    access_token: str = Form(...)
+):
+    try:
+        # pakai access_token dari Supabase link recovery
+        supabase.auth.set_session(access_token, None)
+        supabase.auth.update_user({"password": password})
+
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "msg": "Password berhasil diubah 💕 Silakan login kembali.", "error": None, "access_token": None},
+        )
+
+    except Exception as e:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "msg": None, "error": str(e), "access_token": access_token},
+        )
