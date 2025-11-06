@@ -32,10 +32,7 @@ def shortlink_page(request: Request):
     new_code = request.query_params.get("new")
     new_link = None
     if new_code:
-        # Gunakan header Railway agar domain tetap benar
-        host = request.headers.get("x-forwarded-host", request.url.hostname)
-        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-        base_url = f"{scheme}://{host}"
+        base_url = str(request.base_url).rstrip("/")
 
         new_link = {
             "full_url": f"{base_url}/s/{new_code}",
