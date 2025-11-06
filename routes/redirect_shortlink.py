@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from config import supabase
-from services.core import templates, get_user, is_admin
+from services.core import templates
 
 router = APIRouter(tags=["Redirect Shortlink"])
 

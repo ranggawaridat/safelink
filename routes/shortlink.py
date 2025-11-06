@@ -3,10 +3,9 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from config import supabase
 from services.utils import random_code
-from services.core import templates, get_user, is_admin
+from services.core import templates
 
 router = APIRouter(prefix="/shortlink", tags=["shortlink"])
-
 
 @router.get("/", response_class=HTMLResponse)
 def shortlink_page(request: Request):
@@ -19,6 +18,7 @@ def shortlink_page(request: Request):
     except Exception:
         return RedirectResponse("/login")
 
+    # Ambil semua shortlink milik user
     links = (
         supabase.table("links")
         .select("*")
@@ -28,12 +28,15 @@ def shortlink_page(request: Request):
         .data or []
     )
 
-
-    # ambil kode shortlink baru kalau ada
+    # Ambil kode shortlink baru (jika baru dibuat)
     new_code = request.query_params.get("new")
     new_link = None
     if new_code:
-        base_url = f"{request.url.scheme}://{request.url.hostname}"
+        # Gunakan header Railway agar domain tetap benar
+        host = request.headers.get("x-forwarded-host", request.url.hostname)
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+        base_url = f"{scheme}://{host}"
+
         new_link = {
             "full_url": f"{base_url}/s/{new_code}",
             "short_code": new_code
@@ -58,14 +61,28 @@ def create_shortlink(request: Request, url: str = Form(...)):
     except Exception:
         return RedirectResponse("/login")
 
-    # generate short code unik
+    # Bersihkan & validasi URL
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    # Cegah input URL kosong atau tidak valid
+    if "." not in url:
+        return HTMLResponse("<h3>URL tidak valid.</h3>", status_code=400)
+
+    # Generate short code unik
     while True:
         short_code = random_code()
-        existing = supabase.table("links").select("id").eq("short_code", short_code).execute()
+        existing = (
+            supabase.table("links")
+            .select("id")
+            .eq("short_code", short_code)
+            .execute()
+        )
         if not existing.data:
             break
 
-    # simpan data shortlink baru
+    # Simpan data shortlink baru
     supabase.table("links").insert({
         "user_id": user.id,
         "original_url": url,
@@ -74,14 +91,19 @@ def create_shortlink(request: Request, url: str = Form(...)):
         "created_at": datetime.utcnow().isoformat()
     }).execute()
 
-    # redirect dengan pesan sukses
+    # Redirect dengan pesan sukses
     return RedirectResponse(f"/shortlink?new={short_code}", status_code=303)
 
 
 @router.get("/s/{short_code}")
 def redirect_shortlink(short_code: str):
-    # cari data link berdasarkan short_code
-    response = supabase.table("links").select("*").eq("short_code", short_code).execute()
+    # Cari data link berdasarkan short_code
+    response = (
+        supabase.table("links")
+        .select("*")
+        .eq("short_code", short_code)
+        .execute()
+    )
     data = response.data
 
     if not data:
@@ -89,9 +111,9 @@ def redirect_shortlink(short_code: str):
 
     link = data[0]
 
-    # tambahkan klik +1
+    # Tambahkan klik +1
     new_clicks = (link.get("clicks") or 0) + 1
     supabase.table("links").update({"clicks": new_clicks}).eq("id", link["id"]).execute()
 
-    # redirect ke original_url
+    # Redirect ke original_url
     return RedirectResponse(link["original_url"])
