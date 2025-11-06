@@ -1,12 +1,11 @@
 from datetime import datetime
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from config import supabase
 from services.utils import random_code
+from services.core import templates, get_user, is_admin
 
 router = APIRouter(prefix="/shortlink", tags=["shortlink"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/", response_class=HTMLResponse)

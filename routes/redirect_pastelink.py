@@ -1,11 +1,10 @@
 import re
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from config import supabase
+from services.core import templates, get_user, is_admin
 
 router = APIRouter(tags=["Redirect Paste"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/p/{code}", response_class=HTMLResponse)

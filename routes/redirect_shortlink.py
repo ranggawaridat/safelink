@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Request 
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from config import supabase
+from services.core import templates, get_user, is_admin
 
 router = APIRouter(tags=["Redirect Shortlink"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("/s/{code}", response_class=HTMLResponse)
 async def redirect_link(request: Request, code: str):

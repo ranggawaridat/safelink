@@ -1,17 +1,15 @@
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
+from config import supabase
 import os
+from services.core import templates
 from routes import admin, auth, dashboard, shortlink, pastelink, redirect_shortlink, redirect_pastelink
 
-# --- Load environment (.env) ---
 load_dotenv()
 is_dev = os.getenv("ENV", "dev") == "dev"
-
 
 app = FastAPI(
     title="Safelinku",
@@ -19,13 +17,29 @@ app = FastAPI(
     redoc_url="/redoc" if is_dev else None,
 )
 
-# Static files (jika kamu punya folder css/js di /static)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-templates = Jinja2Templates(directory="templates")
+
+@app.middleware("http")
+async def add_user_role(request: Request, call_next):
+    token = request.cookies.get("access_token")
+    user = None
+    is_admin = False
+    if token:
+        try:
+            user = supabase.auth.get_user(token).user
+            profile = supabase.table("user_profiles").select("role").eq("id", user.id).execute()
+            if profile.data and profile.data[0].get("role") == "admin":
+                is_admin = True
+        except Exception:
+            pass
+
+    request.state.user = user
+    request.state.is_admin = is_admin
+    response = await call_next(request)
+    return response
 
 
-# --- CORS Middleware (opsional tapi penting) ---
 if is_dev:
     origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 else:
@@ -39,8 +53,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# --- Security Headers Middleware ---
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
@@ -52,7 +64,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Daftarkan semua router tanpa prefix agar endpoint sesuai rencana
+
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(shortlink.router)
@@ -61,7 +73,7 @@ app.include_router(redirect_shortlink.router)
 app.include_router(redirect_pastelink.router)
 app.include_router(admin.router)
 
-# Root redirect ke /dashboard jika login, atau ke /login
+
 @app.get("/")
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})

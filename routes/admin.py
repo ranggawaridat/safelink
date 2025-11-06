@@ -4,9 +4,9 @@ from fastapi.templating import Jinja2Templates
 from config import supabase
 from io import StringIO
 import csv
+from services.core import templates, get_user, is_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("/", response_class=HTMLResponse)
 def admin_dashboard(request: Request):

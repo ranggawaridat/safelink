@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from config import supabase
-from fastapi.templating import Jinja2Templates
 import os
+from services.core import templates, get_user, is_admin
 
 is_dev = os.getenv("ENV", "dev") == "dev"
 
-templates = Jinja2Templates(directory="templates")
 router = APIRouter(tags=["auth"])
 
 @router.get("/login", response_class=HTMLResponse)

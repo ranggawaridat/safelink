@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from config import supabase
+from services.core import templates, get_user, is_admin
 
 router = APIRouter(tags=["Dashboard"])
-templates = Jinja2Templates(directory="templates")
 
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
@@ -17,10 +16,12 @@ def dashboard(request: Request):
     except Exception:
         return RedirectResponse("/login", status_code=302)
 
-    # Ambil role user dari table user_profiles
+
+    # Ambil role user (admin / user)
     profile_data = supabase.table("user_profiles").select("role").eq("id", user.id).execute()
-    role = profile_data.data[0]["role"] if profile_data.data else "user"  # default: user
+    role = profile_data.data[0]["role"] if profile_data.data else "user"
     is_admin = role == "admin"
+
 
     # Ambil semua shortlink dan pastelink milik user
     links = (
