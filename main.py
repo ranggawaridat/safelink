@@ -1,13 +1,10 @@
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from config import supabase
 import os
 from services.core import templates
 from routes import admin, auth, dashboard, shortlink, pastelink, redirect_shortlink, redirect_pastelink
-from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 load_dotenv()
@@ -26,7 +23,6 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["safelinku.site", "*.safelinku.site"])
 
 
