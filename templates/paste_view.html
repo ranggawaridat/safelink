@@ -1,62 +1,116 @@
 {% extends "base.html" %}
 
 {% block head %}
-    {{ super() }}
-    <!-- 🌸 Ad Script (Head Zone) -->
-    <script>(function(s){s.dataset.zone='10127605',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+{{ super() }}
+<script>
+    (function (s) {
+        s.dataset.zone = '10127605';
+        s.src = 'https://al5sm.com/tag.min.js';
+    })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))
+</script>
 
-    <style>
+<style>
+    :root {
+        --safelinku-blue: #007bff;
+        --safelinku-light: #f1f5f9;
+    }
+
+    body {
+        background-color: var(--safelinku-light);
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        color: #333;
+    }
+
+    .paste-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0.5rem 0.8rem;
+    }
+
+    .paste-header {
+        text-align: center;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--safelinku-blue);
+        margin-bottom: 0.2rem;
+    }
+
+    .paste-tagline {
+        text-align: center;
+        color: #555;
+        font-size: 0.9rem;
+        margin-bottom: 0.8rem;
+        font-style: italic;
+    }
+
+    .paste-content {
+        background: transparent;
+        border: none;
+        padding: 0.2rem 0;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        line-height: 1.6;
+        font-size: 0.98rem;
+    }
+
+    .ad-banner {
+        margin: 15px 0;
+        text-align: center;
+    }
+
+    /* 🌸 Responsiveness */
+    @media (max-width: 768px) {
         .paste-container {
-            max-width: 800px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            padding: 0.4rem 0.6rem;
         }
 
         .paste-header {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #444;
-            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+        }
+
+        .paste-tagline {
+            font-size: 0.85rem;
+            margin-bottom: 0.6rem;
         }
 
         .paste-content {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.6;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .paste-container {
+            padding: 0.3rem 0.5rem;
         }
 
-        .ad-banner {
-            margin: 30px 0;
-            text-align: center;
+        .paste-header {
+            font-size: 1.1rem;
+            margin-bottom: 0.1rem;
         }
 
-        body {
-            background-color: #f1f5f9;
+        .paste-content {
+            font-size: 1.02rem;
         }
-    </style>
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-    <div class="paste-container">
-        <div class="paste-header"></div>
+<div class="paste-container">
 
-        <!-- 🌸 Banner Ad (mid-content) -->
-        <div class="ad-banner">
-            <script async="async" data-cfasync="false" src="//tearingtastes.com/c9199a7c30b6128ca4b29eed8a267391/invoke.js"></script>
-            <div id="container-c9199a7c30b6128ca4b29eed8a267391"></div>
-        </div>
-
-        <div class="paste-content">
-            {{ content | safe }}
-        </div>
+    <div class="paste-content">
+        {{ content | safe }}
     </div>
+
+    <div class="ad-banner">
+        <script async="async" data-cfasync="false"
+            src="//tearingtastes.com/c9199a7c30b6128ca4b29eed8a267391/invoke.js"></script>
+        <div id="container-c9199a7c30b6128ca4b29eed8a267391"></div>
+    </div>
+
+
+</div>
 {% endblock %}
