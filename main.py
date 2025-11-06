@@ -7,10 +7,17 @@ from config import supabase
 import os
 from services.core import templates
 from routes import admin, auth, dashboard, shortlink, pastelink, redirect_shortlink, redirect_pastelink
+from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 load_dotenv()
 is_dev = os.getenv("ENV", "dev") == "dev"
 
+if is_dev:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["safelinku.site", "*.safelinku.site"]
+    
 app = FastAPI(
     title="Safelinku",
     docs_url="/docs" if is_dev else None,
@@ -19,39 +26,9 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["safelinku.site", "*.safelinku.site"])
 
-@app.middleware("http")
-async def add_user_role(request: Request, call_next):
-    token = request.cookies.get("access_token")
-    user = None
-    is_admin = False
-    if token:
-        try:
-            user = supabase.auth.get_user(token).user
-            profile = supabase.table("user_profiles").select("role").eq("id", user.id).execute()
-            if profile.data and profile.data[0].get("role") == "admin":
-                is_admin = True
-        except Exception:
-            pass
-
-    request.state.user = user
-    request.state.is_admin = is_admin
-    response = await call_next(request)
-    return response
-
-
-if is_dev:
-    origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
-else:
-    origins = ["https://safelinku.site"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):

@@ -6,3 +6,4 @@ supabase
 httpx
 gunicorn
 python-multipart
+starlette
