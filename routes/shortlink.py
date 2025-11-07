@@ -32,12 +32,19 @@ def shortlink_page(request: Request):
     new_code = request.query_params.get("new")
     new_link = None
     if new_code:
-        base_url = str(request.base_url).rstrip("/")
+        
+        # scheme = "https" if request.url.hostname == "safelinku.site" else request.url.scheme
+        # base_url = f"{scheme}://{request.url.hostname}"
+        # new_link = {
+        #     "full_url": f"{base_url}/s/{new_code}",
+        #     "short_code": new_code
+        # }
 
         new_link = {
-            "full_url": f"{base_url}/s/{new_code}",
+            "full_url": f"https://{request.url.hostname}/s/{new_code}",
             "short_code": new_code
         }
+
 
     return templates.TemplateResponse("shortlink.html", {
         "request": request,
