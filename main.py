@@ -4,8 +4,7 @@ from dotenv import load_dotenv
 import os
 from services.core import templates
 from routes import admin, auth, dashboard, shortlink, pastelink, redirect_shortlink, redirect_pastelink
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
-
+from starlette.responses import Response
 
 load_dotenv()
 is_dev = os.getenv("ENV", "dev") == "dev"
@@ -18,7 +17,11 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.add_middleware(HTTPSRedirectMiddleware)
+@app.middleware("http")
+async def hsts_middleware(request: Request, call_next):
+    response: Response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)
