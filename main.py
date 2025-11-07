@@ -41,6 +41,15 @@ async def hsts_middleware(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
+@app.middleware("http")
+async def force_https_scheme(request: Request, call_next):
+    # Jika domain utama safelinku.site → ubah scheme jadi https
+    if request.url.hostname and "safelinku.site" in request.url.hostname:
+        request.scope["scheme"] = "https"
+    response = await call_next(request)
+    return response
+
+
 app.add_middleware(ProxyHeadersMiddleware)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
