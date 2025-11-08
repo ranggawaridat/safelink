@@ -54,10 +54,9 @@ async def register_page(request: Request):
 @router.post("/register")
 async def register_post(request: Request, email: str = Form(...), password: str = Form(...)):
     try:
-        user = supabase.auth.admin.create_user({
+        user = supabase.auth.sign_up({
             "email": email,
             "password": password,
-            "email_confirm": True
         })
 
         # kirim pesan sukses via query parameter
