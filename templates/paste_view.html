@@ -101,16 +101,15 @@
 {% block content %}
 <div class="paste-container">
 
-    <div class="paste-content">
-        {{ content | safe }}
-    </div>
-
     <div class="ad-banner">
         <script async="async" data-cfasync="false"
             src="//tearingtastes.com/c9199a7c30b6128ca4b29eed8a267391/invoke.js"></script>
         <div id="container-c9199a7c30b6128ca4b29eed8a267391"></div>
     </div>
 
+    <div class="paste-content">
+        {{ content | safe }}
+    </div>
 
 </div>
 {% endblock %}
