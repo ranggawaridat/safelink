@@ -31,8 +31,9 @@
     </thead>
     <tbody>
       {% for link in recent_links %}
-      <tr>
-        <td><a href="/s/{{ link.short_code }}" target="_blank">{{ request.url.scheme }}://{{ request.url.hostname }}/s/{{ link.short_code }}</a></td>
+      <tr id="link-{{ link.id }}">
+        <td><a href="/s/{{ link.short_code }}" target="_blank">{{ request.url.scheme }}://{{ request.url.hostname
+            }}/s/{{ link.short_code }}</a></td>
         <td style="word-break: break-all;">{{ link.original_url }}</td>
         <td>{{ link.clicks or 0 }}</td>
         <td>{{ link.created_at[:19].replace('T', ' ') if link.created_at else '-' }}</td>
@@ -62,7 +63,7 @@
     </thead>
     <tbody>
       {% for paste in recent_pastes %}
-      <tr>
+      <tr id="paste-{{ paste.id }}">
         <td>
           <a href="/p/{{ paste.short_code }}" target="_blank">
             {{ request.url.scheme }}://{{ request.url.hostname }}/p/{{ paste.short_code }}
@@ -80,4 +81,137 @@
   <p>Belum ada PasteLink yang dibuat.</p>
   {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabaseUrl = "{{ supabase_url }}";
+  const supabaseAnonKey = "{{ supabase_anon_key }}";
+  const accessToken = "{{ access_token }}";
+  const userId = "{{ user.id }}";
+
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  });
+
+  // Update counters
+  function updateCounters(type, change) {
+    const totalLinksEl = document.querySelector('p:nth-child(1) strong');
+    const totalPastesEl = document.querySelector('p:nth-child(2) strong');
+
+    if (type === 'link') {
+      let current = parseInt(totalLinksEl.innerText);
+      totalLinksEl.innerText = current + change;
+    } else if (type === 'paste') {
+      let current = parseInt(totalPastesEl.innerText);
+      totalPastesEl.innerText = current + change;
+    }
+  }
+
+  function updateTotalClicks(change) {
+    const totalClicksEl = document.querySelector('p:nth-child(3) strong');
+    let current = parseInt(totalClicksEl.innerText);
+    totalClicksEl.innerText = current + change;
+  }
+
+  // Subscribe to changes
+  const channel = supabase.channel('realtime:dashboard')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'links', filter: `user_id=eq.${userId}` },
+      (payload) => {
+        console.log('Link change received!', payload);
+        if (payload.eventType === 'INSERT') {
+          updateCounters('link', 1);
+          const tbody = document.querySelector('section:nth-of-type(2) tbody');
+          if (tbody) {
+            const newRow = `
+              <tr id="link-${payload.new.id}">
+                <td><a href="/s/${payload.new.short_code}" target="_blank">${window.location.protocol}//${window.location.hostname}/s/${payload.new.short_code}</a></td>
+                <td style="word-break: break-all;">${payload.new.original_url}</td>
+                <td>0</td>
+                <td>Just now</td>
+              </tr>
+            `;
+            tbody.insertAdjacentHTML('afterbegin', newRow);
+            if (tbody.children.length > 5) {
+              tbody.lastElementChild.remove();
+            }
+          } else {
+            window.location.reload();
+          }
+
+        } else if (payload.eventType === 'UPDATE') {
+          const row = document.getElementById(`link-${payload.new.id}`);
+          if (row) {
+            const oldClicks = payload.old.clicks || 0;
+            const newClicks = payload.new.clicks || 0;
+            if (newClicks !== oldClicks) {
+              row.children[2].innerText = newClicks;
+              updateTotalClicks(newClicks - oldClicks);
+            }
+          }
+        } else if (payload.eventType === 'DELETE') {
+          updateCounters('link', -1);
+          const row = document.getElementById(`link-${payload.old.id}`);
+          if (row) {
+            row.remove();
+          }
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'pastes', filter: `user_id=eq.${userId}` },
+      (payload) => {
+        console.log('Paste change received!', payload);
+        if (payload.eventType === 'INSERT') {
+          updateCounters('paste', 1);
+          const tbody = document.querySelector('section:nth-of-type(3) tbody');
+          if (tbody) {
+            const newRow = `
+              <tr id="paste-${payload.new.id}">
+                <td>
+                  <a href="/p/${payload.new.short_code}" target="_blank">
+                    ${window.location.protocol}//${window.location.hostname}/p/${payload.new.short_code}
+                  </a>
+                </td>
+                <td>${payload.new.content.substring(0, 60)}${payload.new.content.length > 60 ? '...' : ''}</td>
+                <td>0</td>
+                <td>Just now</td>
+              </tr>
+            `;
+            tbody.insertAdjacentHTML('afterbegin', newRow);
+            if (tbody.children.length > 5) {
+              tbody.lastElementChild.remove();
+            }
+          } else {
+            window.location.reload();
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          const row = document.getElementById(`paste-${payload.new.id}`);
+          if (row) {
+            const oldClicks = payload.old.clicks || 0;
+            const newClicks = payload.new.clicks || 0;
+            if (newClicks !== oldClicks) {
+              row.children[2].innerText = newClicks;
+              updateTotalClicks(newClicks - oldClicks);
+            }
+          }
+        } else if (payload.eventType === 'DELETE') {
+          updateCounters('paste', -1);
+          const row = document.getElementById(`paste-${payload.old.id}`);
+          if (row) {
+            row.remove();
+          }
+        }
+      }
+    )
+    .subscribe();
+</script>
 {% endblock %}

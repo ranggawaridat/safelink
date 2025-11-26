@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+import config
 from config import supabase
 from services.core import templates, get_user, is_admin
 
@@ -59,4 +60,7 @@ def dashboard(request: Request):
         "total_clicks": sum((l.get("clicks") or 0) for l in links) + sum((p.get("clicks") or 0) for p in pastes),
         "recent_links": sorted(links, key=lambda x: x.get("created_at") or "", reverse=True)[:5],
         "recent_pastes": sorted(pastes, key=lambda x: x.get("created_at") or "", reverse=True)[:5],
+        "supabase_url": config.SUPABASE_URL,
+        "supabase_anon_key": config.SUPABASE_ANON_KEY,
+        "access_token": token,
     })
